@@ -17,6 +17,12 @@ const nextConfig = {
       ...config.experiments,
       topLevelAwait: true,
     };
+    config.resolve.fallback = {
+      fs: false,
+      net: false,
+      tls: false,
+      path: false,
+    };
     return config;
   },
 };
