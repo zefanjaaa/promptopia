@@ -19,20 +19,49 @@ const PromptCardList = ({ data, handleTagClick }) => {
 const Feed = () => {
   const [searchText, setSearchText] = useState("");
   const [allPosts, setAllPosts] = useState([]);
+  const [searchTimeOut, setSearchTimeOut] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
 
-  const handleSearchChange = (event) => {};
-  const handleTagClick = () => {};
+  const fetchPosts = async () => {
+    const response = await fetch("/api/prompt");
+    const data = await response.json();
+
+    setAllPosts(data);
+  };
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const response = await fetch("/api/prompt");
-      const data = await response.json();
-      console.log(data);
-      setAllPosts(data);
-    };
     fetchPosts();
   }, []);
 
+  const filterPrompts = (searchText) => {
+    const regex = new RegExp(searchText, "i");
+    return allPosts.filter((item) => {
+      return (
+        regex.test(item.creator.username) ||
+        regex.test(item.tag) ||
+        regex.test(item.prompt)
+      );
+    });
+  };
+
+  const handleSearchChange = (event) => {
+    clearTimeout(searchTimeOut);
+    setSearchText(event.target.value);
+
+    setSearchTimeOut(
+      setTimeout(() => {
+        const searchResult = filterPrompts(event.target.value);
+        setSearchResults(searchResult);
+      }, 500)
+    );
+  };
+  const handleTagClick = (tag) => {
+    const searchResult = filterPrompts(tag);
+    setSearchText(tag);
+    setSearchResults(searchResult);
+  };
+
+  console.log(searchResults);
   return (
     <section className="feed">
       <form className="relative w-full flex-center">
@@ -45,7 +74,11 @@ const Feed = () => {
           className="search_input peer"
         />
       </form>
-      <PromptCardList data={allPosts} handleTagClick={handleTagClick} />
+      {searchText ? (
+        <PromptCardList data={searchResults} handleTagClick={handleTagClick} />
+      ) : (
+        <PromptCardList data={allPosts} handleTagClick={handleTagClick} />
+      )}
     </section>
   );
 };
